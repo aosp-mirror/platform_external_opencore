@@ -2539,7 +2539,7 @@ bool PVMFOMXEncNode::SetMP4EncoderParameters()
     Mpeg4Type.nIDCVLCThreshold = 0;
     Mpeg4Type.bACPred = OMX_TRUE;
     Mpeg4Type.nMaxPacketSize = iVideoEncodeParam.iPacketSize;
-    Mpeg4Type.nTimeIncRes = 60; // (in relation to (should be higher than) frame rate )
+    Mpeg4Type.nTimeIncRes = 1000; // (in relation to (should be higher than) frame rate )
     Mpeg4Type.nHeaderExtension = 0;
     Mpeg4Type.bReversibleVLC = ((iVideoEncodeParam.iRVLCEnable == true) ? OMX_TRUE : OMX_FALSE);
 
@@ -3010,8 +3010,8 @@ bool PVMFOMXEncNode::SetH264EncoderParameters()
     H264Type.bEnableFMO = OMX_FALSE;
     H264Type.bEnableASO = OMX_FALSE;
     H264Type.bEnableRS = OMX_FALSE;
-//  H264Type.eProfile = OMX_VIDEO_AVCProfileBaseline;
-//  H264Type.eLevel = OMX_VIDEO_AVCLevel1b;
+    //H264Type.eProfile = OMX_VIDEO_AVCProfileBaseline;
+    //H264Type.eLevel = OMX_VIDEO_AVCLevel1b;
     H264Type.bFrameMBsOnly = OMX_TRUE;
     H264Type.bMBAFF = OMX_FALSE;
     H264Type.bEntropyCodingCABAC = OMX_FALSE;
@@ -3044,7 +3044,7 @@ bool PVMFOMXEncNode::SetH264EncoderParameters()
 
     //Set the parameters now
     BitRateType.nPortIndex = iOutputPortIndex;
-    BitRateType.eControlRate = OMX_Video_ControlRateDisable; //static_cast<OMX_VIDEO_CONTROLRATETYPE>(iVideoEncodeParam.iRateControlType);
+    BitRateType.eControlRate = static_cast<OMX_VIDEO_CONTROLRATETYPE>(iVideoEncodeParam.iRateControlType);
     BitRateType.nTargetBitrate = iVideoEncodeParam.iBitRate[0];
     Err = OMX_SetParameter(iOMXEncoder, OMX_IndexParamVideoBitrate, &BitRateType);
     if (OMX_ErrorNone != Err)
@@ -4694,9 +4694,14 @@ OMX_ERRORTYPE PVMFOMXEncNode::EventHandlerProcessing(OMX_OUT OMX_HANDLETYPE aCom
                 ReportInfoEvent(PVMFInfoProcessingFailure, NULL);
 
             }
+            else if (aData1 == (OMX_U32) OMX_ErrorInvalidState)
+            {
+                PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
+                                (0, "PVMFOMXEncNode-%s::EventHandlerProcessing: OMX_EventError - OMX_ErrorInvalidState", iNodeTypeId));
+                HandleComponentStateChange(OMX_StateInvalid);
+            }
             else
             {
-
                 PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
                                 (0, "PVMFOMXEncNode-%s::EventHandlerProcessing: OMX_EventError", iNodeTypeId));
                 // for now, any error from the component will be reported as error
@@ -4956,6 +4961,46 @@ void PVMFOMXEncNode::HandleComponentStateChange(OMX_U32 encoder_state)
 
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_ERR,
                             (0, "PVMFOMXEncNode-%s::HandleComponentStateChange: OMX_StateInvalid reached", iNodeTypeId));
+            //Clearup encoder
+            DeleteOMXEncoder();
+
+            if (iCurrentCommand.size() > 0)
+            {//can NOT be CANCEL or CANCEL_ALL. Just to cmd completion for the rest
+                if (iCurrentCommand.front().iCmd == PVMFOMXEncNodeCommand::PVOMXENC_NODE_CMD_RESET)
+                {
+                    //delete all ports and notify observer.
+                    if (iInPort)
+                    {
+                        OSCL_DELETE(((PVMFOMXEncPort*)iInPort));
+                        iInPort = NULL;
+                    }
+
+                    if (iOutPort)
+                    {
+                        OSCL_DELETE(((PVMFOMXEncPort*)iOutPort));
+                        iOutPort = NULL;
+                    }
+
+                    iDataIn.Unbind();
+
+                    // Reset the metadata key list
+                    iAvailableMetadataKeys.clear();
+
+                    iEndOfDataReached = false;
+                    iIsEOSSentToComponent = false;
+                    iIsEOSReceivedFromComponent = false;
+
+                    iProcessingState = EPVMFOMXEncNodeProcessingState_Idle;
+                    //logoff & go back to Created state.
+                    SetState(EPVMFNodeIdle);
+                    CommandComplete(iCurrentCommand, iCurrentCommand.front(), PVMFSuccess);
+                }
+                else
+                {
+                    SetState(EPVMFNodeError);
+                    CommandComplete(iCurrentCommand, iCurrentCommand.front(), PVMFErrResource);
+                }
+            }
 
             break;
         }//end of case OMX_StateInvalid
@@ -5050,7 +5095,7 @@ OMX_ERRORTYPE PVMFOMXEncNode::FillBufferDoneProcessing(OMX_OUT OMX_HANDLETYPE aC
     // address of the mempool buffer (so that it can be released)
     OsclAny *pContext = (OsclAny*) aBuffer->pAppPrivate;
 
-    uint32 nal_size= 0;
+
     // check for EOS flag
     if ((aBuffer->nFlags & OMX_BUFFERFLAG_EOS))
     {
@@ -5069,7 +5114,7 @@ OMX_ERRORTYPE PVMFOMXEncNode::FillBufferDoneProcessing(OMX_OUT OMX_HANDLETYPE aC
         uint8* pData = (uint8*)aBuffer->pBuffer + aBuffer->nOffset;
         uint8* pTemp;
         uint32 size = aBuffer->nFilledLen;
-        if (AVCAnnexBGetNALUnit(pData, &pTemp, (int32*)&size, false))
+        if (AVCAnnexBGetNALUnit(pData, &pTemp, (int32*)&size, true))
         {
             iFirstNALStartCodeSize = (uint32)pTemp - (uint32)pData;
         }
@@ -5077,7 +5122,6 @@ OMX_ERRORTYPE PVMFOMXEncNode::FillBufferDoneProcessing(OMX_OUT OMX_HANDLETYPE aC
         {
             iFirstNALStartCodeSize = 0;
         }
-        nal_size = size;
     }
 
     /* the case in which a buffer simply containing a start code is sent */
@@ -5207,42 +5251,46 @@ OMX_ERRORTYPE PVMFOMXEncNode::FillBufferDoneProcessing(OMX_OUT OMX_HANDLETYPE aC
 
             if (nal_type == 0x07) // SPS type NAL
             {
+                int32 nal_size = aBuffer->nFilledLen;
+                AVCAnnexBGetNALUnit(aBuffer->pBuffer, &bitstream, (int32*)&nal_size, false);
                 // can the SPS fit into the buffer
                 if (aBuffer->nFilledLen <= (capacity - length))
                 {
                     iSPSs[iNumSPSs].ptr = destptr;
-					iSPSs[iNumSPSs++].len = nal_size;//aBuffer->nFilledLen;
+                    iSPSs[iNumSPSs++].len = nal_size;
 
-					oscl_memcpy(destptr, pBufdata, nal_size); // copy SPS into iParamSet memfragment
-					length += nal_size;
+                    oscl_memcpy(destptr, pBufdata, nal_size); // copy SPS into iParamSet memfragment
+                    length += nal_size;
                     iParamSet.getMemFrag().len = length; // update length
                     destptr += nal_size;
+                    if (nal_size < aBuffer->nFilledLen) {
+                        LOGD("SPS and PPS are located within a single output buffer");
+                        uint8* pData = (uint8*)aBuffer->pBuffer + nal_size +iFirstNALStartCodeSize;
+                        uint32 size = aBuffer->nFilledLen -(nal_size +iFirstNALStartCodeSize);
+                        AVCAnnexBGetNALUnit(pData, &bitstream, (int32*)&size, false);
+                        nal_size = size;
+                        nal_type = bitstream[0] & 0x1F;
+                        if (nal_type == 0x08) // PPS type NAL
+                        {
+                            if (aBuffer->nFilledLen <= (capacity - length))
+                            {
+                                iPPSs[iNumPPSs].ptr = destptr;
+                                iPPSs[iNumPPSs++].len = nal_size;
+                                oscl_memcpy(destptr, bitstream, nal_size); // copy PPS into iParamSet memfragment$
+                                length += nal_size;
+                                iParamSet.getMemFrag().len = length; // update length
+                            }
+                        }
+                    }
                 }
 
-				uint8* pData = (uint8*)aBuffer->pBuffer + nal_size +iFirstNALStartCodeSize;
-				uint32 size = aBuffer->nFilledLen -(nal_size +iFirstNALStartCodeSize) ;
-				AVCAnnexBGetNALUnit(pData, &bitstream, (int32*)&size, false) ;		
-				nal_size = size;	
-				nal_type = bitstream[0] & 0x1F;
-				if (nal_type == 0x08) // PPS type NAL
-				{
-					if (aBuffer->nFilledLen <= (capacity - length))
-					{
-						iPPSs[iNumPPSs].ptr = destptr;
-						iPPSs[iNumPPSs++].len = nal_size;//aBuffer->nFilledLen;
-
-						oscl_memcpy(destptr, bitstream, nal_size); // copy PPS into iParamSet memfragment
-						length += nal_size;//aBuffer->nFilledLen;
-						iParamSet.getMemFrag().len = length; // update length
-					}
                 // release the OMX buffer
                 iOutBufMemoryPool->deallocate(pContext);
                 return OMX_ErrorNone;
             }
-            }
             else if (nal_type == 0x08) // PPS type NAL
             {
-
+                LOGD("SPS and PPS are located in separate output buffers");
                 // can the PPS fit into the buffer?
                 if (aBuffer->nFilledLen <= (capacity - length))
                 {
@@ -5863,7 +5911,7 @@ void PVMFOMXEncNode::DoPrepare(PVMFOMXEncNodeCommand& aCmd)
                 {
                     // try to create component
                     err = OMX_MasterGetHandle(&iOMXEncoder, (OMX_STRING) CompOfRole[ii], (OMX_PTR) this, (OMX_CALLBACKTYPE *) & iCallbacks);
-                    // if successful, no need to continue
+
                     if ((err == OMX_ErrorNone) && (iOMXEncoder != NULL))
                     {
                         oscl_strncpy((OMX_STRING)CompName, (OMX_STRING) CompOfRole[ii], PV_OMX_MAX_COMPONENT_NAME_LENGTH);
@@ -5872,16 +5920,22 @@ void PVMFOMXEncNode::DoPrepare(PVMFOMXEncNodeCommand& aCmd)
                                         (0, "PVMFOMXEncNode-%s::DoPrepare(): Got Component %s handle ", iNodeTypeId, CompOfRole[ii]));
                         LOGE("PVMFOMXEncNode-%s::DoPrepare(): Got Component %s handle ", iNodeTypeId, CompOfRole[ii]);
 
-                        break;
-                    }
-                    else
-                    {
-                        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_DEBUG,
-                                        (0, "PVMFOMXEncNode-%s::DoPrepare(): Cannot get component %s handle, try another component if available", iNodeTypeId, CompOfRole[ii]));
-                        LOGE("PVMFOMXEncNode-%s::DoPrepare(): Cannot get component %s handle, try another component if available", iNodeTypeId, CompOfRole[ii]);
+                        if ((CheckComponentForMultRoles((OMX_STRING)CompName, (OMX_STRING)CompOfRole[ii])) &&
+                            (CheckComponentCapabilities(&iOutFormat)))
+                        {
+                            // Found a component and it passed all tests.   Break out of the loop
+                            break;
+                        }
                     }
 
+                    // Component failed negotiations
+                    if (iOMXEncoder != NULL)
+                    {
+                        OMX_MasterFreeHandle(iOMXEncoder);
+                        iOMXEncoder = NULL;
+                    }
                 }
+
                 // whether successful or not, need to free CompOfRoles
                 for (ii = 0; ii < num_comps; ii++)
                 {
@@ -5909,121 +5963,10 @@ void PVMFOMXEncNode::DoPrepare(PVMFOMXEncNodeCommand& aCmd)
                 return;
             }
 
-
-
             if (!iOMXEncoder)
             {
                 CommandComplete(iInputCommands, aCmd, PVMFErrNoResources);
                 return;
-            }
-
-
-            // find out how many roles the component supports
-            OMX_U32 NumRoles;
-            err = OMX_MasterGetRolesOfComponent((OMX_STRING)CompName, &NumRoles, NULL);
-            if (err != OMX_ErrorNone)
-            {
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                                (0, "PVMFOMXEncNode-%s::DoPrepare() Problem getting component roles", iNodeTypeId));
-
-                CommandComplete(iInputCommands, aCmd, PVMFErrResource);
-                return;
-            }
-
-            // if the component supports multiple roles, call OMX_SetParameter
-            if (NumRoles > 1)
-            {
-                OMX_PARAM_COMPONENTROLETYPE RoleParam;
-                CONFIG_SIZE_AND_VERSION(RoleParam);
-                oscl_strncpy((OMX_STRING)RoleParam.cRole, (OMX_STRING)Role, OMX_MAX_STRINGNAME_SIZE);
-                err = OMX_SetParameter(iOMXEncoder, OMX_IndexParamStandardComponentRole, &RoleParam);
-                if (err != OMX_ErrorNone)
-                {
-                    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                                    (0, "PVMFOMXEncNode-%s::DoPrepare() Problem setting component role", iNodeTypeId));
-
-                    CommandComplete(iInputCommands, aCmd, PVMFErrResource);
-                    return;
-                }
-            }
-
-
-            // GET CAPABILITY FLAGS FROM PV COMPONENT, IF this fails, use defaults
-            PV_OMXComponentCapabilityFlagsType Cap_flags;
-            err = OMX_GetParameter(iOMXEncoder, (OMX_INDEXTYPE) PV_OMX_COMPONENT_CAPABILITY_TYPE_INDEX, &Cap_flags);
-            if (err != OMX_ErrorNone)
-            {
-                SetDefaultCapabilityFlags();
-            }
-            else
-            {
-                iIsOMXComponentMultiThreaded = (OMX_TRUE == Cap_flags.iIsOMXComponentMultiThreaded) ? true : false;
-                iOMXComponentSupportsExternalInputBufferAlloc = (OMX_TRUE == Cap_flags.iOMXComponentSupportsExternalInputBufferAlloc) ? true : false;
-                iOMXComponentSupportsExternalOutputBufferAlloc = (OMX_TRUE == Cap_flags.iOMXComponentSupportsExternalOutputBufferAlloc) ? true : false;
-                iOMXComponentSupportsMovableInputBuffers = (OMX_TRUE == Cap_flags.iOMXComponentSupportsMovableInputBuffers) ? true : false;
-                iOMXComponentSupportsPartialFrames = (OMX_TRUE == Cap_flags.iOMXComponentSupportsPartialFrames) ? true : false;
-                iOMXComponentUsesNALStartCodes = (OMX_TRUE == Cap_flags.iOMXComponentUsesNALStartCodes) ? true : false;
-                iOMXComponentCanHandleIncompleteFrames = (OMX_TRUE == Cap_flags.iOMXComponentCanHandleIncompleteFrames) ? true : false;
-                iOMXComponentUsesFullAVCFrames = (OMX_TRUE == Cap_flags.iOMXComponentUsesFullAVCFrames) ? true : false;
-            }
-
-            /*  iOMXComponentUsesNALStartCodes:             The component inserts start codes before NALs
-
-                iOMXComponentUsesFullAVCFrames
-                && !iOMXComponentUsesNALStartCodes:     The component outputs full frames, and stores NAL start codes using the
-                OMX ExtraData structure in the output buffer
-                iOMXComponentUsesFullAVCFrames
-                && iOMXComponentUsesNALStartCodes:      The component outputs full frames, and delimits NALs by their start codes
-
-                iOutFormat == PVMF_MIME_H264_VIDEO_RAW
-                && !iOMXComponentUsesNALStartCodes:     The node inserts the start codes and hides them / exposes them when needed
-
-                iOutFormat == PVMF_MIME_H264_VIDEO_RAW
-                && !iOMXComponentUsesNALStartCodes
-                && iOMXComponentUsesFullAVCFrames:      This is an invalid combination.  If the node wants raw output, and the component
-                uses full frames, and no start codes, then there is no way to detect the
-                NAL boundaries.
-
-            */
-
-            if (iOutFormat == PVMF_MIME_H264_VIDEO_RAW &&
-                    iOMXComponentUsesFullAVCFrames && !iOMXComponentUsesNALStartCodes)
-            {
-                // This is an invalid combination (see above). Therefore, return an error.
-
-
-                PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                                (0, "PVMFOMXEncNode-%s::DoPrepare() Component cannot support %s format", iNodeTypeId, PVMF_MIME_H264_VIDEO_RAW));
-
-                CommandComplete(iInputCommands, aCmd, PVMFErrNotSupported);
-                return;
-            }
-
-
-            // find out about parameters
-            if ((iOutFormat == PVMF_MIME_AMR_IETF) || (iOutFormat == PVMF_MIME_AMRWB_IETF) || (iOutFormat == PVMF_MIME_AMR_IF2) ||
-                    (iOutFormat == PVMF_MIME_ADIF) || (iOutFormat == PVMF_MIME_ADTS) || (iOutFormat == PVMF_MIME_MPEG4_AUDIO))
-            {
-                if (!NegotiateAudioComponentParameters())
-                {
-                    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                                    (0, "PVMFOMXEncNode-%s::DoPrepare() Cannot get component parameters", iNodeTypeId));
-
-                    CommandComplete(iInputCommands, aCmd, PVMFErrNoResources);
-                    return;
-                }
-            }
-            else
-            {
-
-                if (!NegotiateVideoComponentParameters())
-                {
-                    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                                    (0, "PVMFOMXEncNode-%s::DoPrepare() Cannot get component parameters", iNodeTypeId));
-
-                    CommandComplete(iInputCommands, aCmd, PVMFErrNoResources);
-                    return;
-                }
             }
 
             // create active objects to handle callbacks in case of multithreaded implementation
@@ -6612,26 +6555,7 @@ void PVMFOMXEncNode::DoReset(PVMFOMXEncNodeCommand& aCmd)
                 err = OMX_GetState(iOMXEncoder, &sState);
                 if (err != OMX_ErrorNone)
                 {
-                    //Error condition report
-                    PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                                    (0, "PVMFOMXEncNode-%s::DoReset(): Can't get State of encoder!", iNodeTypeId));
-                    if (iResetInProgress)
-                    {
-                        // cmd is in current q
-                        iResetInProgress = false;
-                        if ((iCurrentCommand.size() > 0) &&
-                                (iCurrentCommand.front().iCmd == PVMFOMXEncNodeCommand::PVOMXENC_NODE_CMD_RESET)
-                           )
-                        {
-                            CommandComplete(iCurrentCommand, iCurrentCommand.front(), PVMFErrResource);
-                        }
-
-                    }
-                    else
-                    {
-                        CommandComplete(iInputCommands, aCmd, PVMFErrResource);
-                    }
-                    return;
+                    sState = OMX_StateInvalid;
                 }
 
                 if (sState == OMX_StateLoaded)
@@ -6645,47 +6569,9 @@ void PVMFOMXEncNode::DoReset(PVMFOMXEncNodeCommand& aCmd)
                                         (0, "PVMFOMXEncNode-%s::DoReset() OMX comp is in loaded state. Wait for official callback to change variables etc.", iNodeTypeId));
                         return;
                     }
-                    else
-                    {
-                        //delete all ports and notify observer.
-                        if (iInPort)
-                        {
-                            OSCL_DELETE(((PVMFOMXEncPort*)iInPort));
-                            iInPort = NULL;
-                        }
-
-                        if (iOutPort)
-                        {
-                            OSCL_DELETE(((PVMFOMXEncPort*)iOutPort));
-                            iOutPort = NULL;
-                        }
-
-                        iDataIn.Unbind();
-
-
-                        // Reset the metadata key list
-                        iAvailableMetadataKeys.clear();
-
-                        iEndOfDataReached = false;
-                        iIsEOSSentToComponent = false;
-                        iIsEOSReceivedFromComponent = false;
-
-
-                        iProcessingState = EPVMFOMXEncNodeProcessingState_Idle;
-                        //logoff & go back to Created state.
-                        SetState(EPVMFNodeIdle);
-
-                        CommandComplete(iInputCommands, aCmd, PVMFSuccess);
-
-                        //CommandComplete(iInputCommands, aCmd, PVMFErrResource);
-                        return;
-                    }
                 }
-
-                if (sState == OMX_StateIdle)
+                else if (sState == OMX_StateIdle)
                 {
-
-
                     //this command is asynchronous.  move the command from
                     //the input command queue to the current command, where
                     //it will remain until it is completed.
@@ -6806,7 +6692,7 @@ void PVMFOMXEncNode::DoReset(PVMFOMXEncNodeCommand& aCmd)
                     return;
 
                 }
-                if ((sState == OMX_StateExecuting) || (sState == OMX_StatePause))
+                else if ((sState == OMX_StateExecuting) || (sState == OMX_StatePause))
                 {
                     //this command is asynchronous.  move the command from
                     //the input command queue to the current command, where
@@ -6883,29 +6769,16 @@ void PVMFOMXEncNode::DoReset(PVMFOMXEncNodeCommand& aCmd)
                             iProcessingState = EPVMFOMXEncNodeProcessingState_Stopping;
                     }
                     return;
-
                 }
                 else
                 {
                     //Error condition report
                     PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
-                                    (0, "PVMFOMXEncNode-%s::DoReset(): Encoder is not in the Idle state!", iNodeTypeId));
-                    if (iResetInProgress)
-                    {
-                        iResetInProgress = false;
-                        if ((iCurrentCommand.size() > 0) &&
-                                (iCurrentCommand.front().iCmd == PVMFOMXEncNodeCommand::PVOMXENC_NODE_CMD_RESET)
-                           )
-                        {
-                            CommandComplete(iCurrentCommand, iCurrentCommand.front(), PVMFErrInvalidState);
-                        }
-                    }
-                    else
-                    {
-                        CommandComplete(iInputCommands, aCmd, PVMFErrInvalidState);
-                    }
-                    break;
-                }//end of if (sState == OMX_StateIdle)
+                                    (0, "PVMFOMXEncNode-%s::DoReset(): Encoder is not in the Idle state! %d", iNodeTypeId, sState ));
+                    //do it here rather than relying on DTOR to avoid node reinit problems.
+                    DeleteOMXEncoder();
+                    //still return success.
+                }//end of if (sState == OMX_StateLoaded)
             }//end of if (iOMXEncoder != NULL)
 
             //delete all ports and notify observer.
@@ -10188,3 +10061,121 @@ uint32 PVMFOMXEncNode::ConvertOMXTicksIntoTimestamp(const OMX_TICKS &src)
     return (uint32) current_ts;
 
 }
+
+////////////////////////////////////////////////////////////////////////////////
+bool PVMFOMXEncNode::CheckComponentForMultRoles(OMX_STRING aCompName, OMX_STRING aRole)
+{
+    OMX_ERRORTYPE err = OMX_ErrorNone;
+
+    // find out how many roles the component supports
+    OMX_U32 NumRoles;
+    err = OMX_MasterGetRolesOfComponent(aCompName, &NumRoles, NULL);
+    if (err != OMX_ErrorNone)
+    {
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
+                    (0, "PVMFOMXEncNode-%s::CheckComponentForMultRoles() Problem getting component roles", iNodeTypeId));
+
+        return false;
+    }
+
+    // if the component supports multiple roles, call OMX_SetParameter
+    if (NumRoles > 1)
+    {
+        OMX_PARAM_COMPONENTROLETYPE RoleParam;
+        CONFIG_SIZE_AND_VERSION(RoleParam);
+        oscl_strncpy((OMX_STRING)RoleParam.cRole, aRole, OMX_MAX_STRINGNAME_SIZE);
+        err = OMX_SetParameter(iOMXEncoder, OMX_IndexParamStandardComponentRole, &RoleParam);
+        if (err != OMX_ErrorNone)
+        {
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
+                            (0, "PVMFOMXEncNode-%s::CheckComponentForMultRoles() Problem setting component role", iNodeTypeId));
+
+            return false;
+        }
+    }
+
+    return true;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+bool PVMFOMXEncNode::CheckComponentCapabilities(PVMFFormatType* aOutFormat)
+{
+    OMX_ERRORTYPE err = OMX_ErrorNone;
+
+    // GET CAPABILITY FLAGS FROM PV COMPONENT, IF this fails, use defaults
+    PV_OMXComponentCapabilityFlagsType Cap_flags;
+    err = OMX_GetParameter(iOMXEncoder, (OMX_INDEXTYPE) PV_OMX_COMPONENT_CAPABILITY_TYPE_INDEX, &Cap_flags);
+    if (err != OMX_ErrorNone)
+    {
+        SetDefaultCapabilityFlags();
+    }
+    else
+    {
+        iIsOMXComponentMultiThreaded = (OMX_TRUE == Cap_flags.iIsOMXComponentMultiThreaded) ? true : false;
+        iOMXComponentSupportsExternalInputBufferAlloc = (OMX_TRUE == Cap_flags.iOMXComponentSupportsExternalInputBufferAlloc) ? true : false;
+        iOMXComponentSupportsExternalOutputBufferAlloc = (OMX_TRUE == Cap_flags.iOMXComponentSupportsExternalOutputBufferAlloc) ? true : false;
+        iOMXComponentSupportsMovableInputBuffers = (OMX_TRUE == Cap_flags.iOMXComponentSupportsMovableInputBuffers) ? true : false;
+        iOMXComponentSupportsPartialFrames = (OMX_TRUE == Cap_flags.iOMXComponentSupportsPartialFrames) ? true : false;
+        iOMXComponentUsesNALStartCodes = (OMX_TRUE == Cap_flags.iOMXComponentUsesNALStartCodes) ? true : false;
+        iOMXComponentCanHandleIncompleteFrames = (OMX_TRUE == Cap_flags.iOMXComponentCanHandleIncompleteFrames) ? true : false;
+        iOMXComponentUsesFullAVCFrames = (OMX_TRUE == Cap_flags.iOMXComponentUsesFullAVCFrames) ? true : false;
+    }
+
+    /* iOMXComponentUsesNALStartCodes:    The component inserts start codes before NALs
+
+      iOMXComponentUsesFullAVCFrames
+       && !iOMXComponentUsesNALStartCodes:  The component outputs full frames, and stores NAL start codes using the
+                 OMX ExtraData structure in the output buffer
+
+      iOMXComponentUsesFullAVCFrames
+       && iOMXComponentUsesNALStartCodes:  The component outputs full frames, and delimits NALs by their start codes
+
+      aOutFormat == PVMF_MIME_H264_VIDEO_RAW
+       && !iOMXComponentUsesNALStartCodes:  The node inserts the start codes and hides them / exposes them when needed
+
+      aOutFormat == PVMF_MIME_H264_VIDEO_RAW
+       && !iOMXComponentUsesNALStartCodes
+       && iOMXComponentUsesFullAVCFrames:  This is an invalid combination.  If the node wants raw output, and the component
+                 uses full frames, and no start codes, then there is no way to detect the
+                 NAL boundaries.
+    */
+
+    if (*aOutFormat == PVMF_MIME_H264_VIDEO_RAW &&
+            iOMXComponentUsesFullAVCFrames && !iOMXComponentUsesNALStartCodes)
+    {
+        // This is an invalid combination (see above). Therefore, return an error.
+
+
+        PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
+                        (0, "PVMFOMXEncNode-%s::CheckComponentCapabilities() Component cannot support %s format", iNodeTypeId, PVMF_MIME_H264_VIDEO_RAW));
+
+        return false;
+    }
+
+    // find out about parameters
+    if (aOutFormat->isAudio())
+    {
+        if (!NegotiateAudioComponentParameters())
+        {
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
+                            (0, "PVMFOMXEncNode-%s::CheckComponentCapabilities() Cannot get component parameters", iNodeTypeId));
+
+            return false;
+        }
+    }
+    else
+    {
+
+        if (!NegotiateVideoComponentParameters())
+        {
+            PVLOGGER_LOGMSG(PVLOGMSG_INST_HLDBG, iLogger, PVLOGMSG_ERR,
+                            (0, "PVMFOMXEncNode-%s::CheckComponentCapabilities() Cannot get component parameters", iNodeTypeId));
+
+            return false;
+        }
+    }
+
+    return true;
+}
+
+
