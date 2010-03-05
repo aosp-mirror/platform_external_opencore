@@ -315,14 +315,15 @@ protected:
     bool iIsMIOConfigured;
 
     /*
-     * The value of mNumberOfFramesToHold is hardware/platform specific.
-     * 1. On non-overlay based platforms, its value it set to 2
-     *    so as to avoid potential tearings oberved during video playback.
-     * 2. On overlay-based platforms, its value should be overwritten.
-     *    We have observed video decoder starvation when a value other than 1.
+     * The value of mNumberOfFramesToHold is decoder specific.
      *
-     * We set the default value to 2 in this class. Please change its value
-     * accordingly in the derived class.
+     * Please make sure that the number of unique output buffers from the decoder
+     * (either hardware or software) is not less than 1 +  mNumberOfFramesToHold;
+     * otherwise, we will have starvation.
+     *
+     * On some platforms, mNumberOfFramesToHold needs to set to more than 1 (such as
+     * 2) in order to workaround a tearing issue from SF during video playback.
+     *
      */
     int mNumberOfFramesToHold;
 
