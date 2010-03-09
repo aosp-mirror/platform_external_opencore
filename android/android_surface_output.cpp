@@ -48,7 +48,7 @@ OSCL_EXPORT_REF AndroidSurfaceOutput::AndroidSurfaceOutput() :
     mPvPlayer = NULL;
     mEmulation = false;
     iEosReceived = false;
-    mNumberOfFramesToHold = 2;
+    mNumberOfFramesToHold = 1;
 }
 
 status_t AndroidSurfaceOutput::set(PVPlayer* pvPlayer, const sp<ISurface>& surface, bool emulation)
