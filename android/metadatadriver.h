@@ -122,8 +122,8 @@ private:
     };
 
     // We support get metadata, or get frame, or get both, or get neigther.
-    static const uint32 GET_METADATA_ONLY    = (0x01 << 0);
-    static const uint32 GET_FRAME_ONLY       = (0x01 << 1);
+    static const uint32 GET_METADATA_ONLY    = METADATA_MODE_METADATA_RETRIEVAL_ONLY;
+    static const uint32 GET_FRAME_ONLY       = METADATA_MODE_FRAME_CAPTURE_ONLY;
     static const uint32 MAX_VIDEO_FRAME_SIZE = 1280 * 720 * 4;  // Big enough?
     static const uint32 MAX_METADATA_STRING_LENGTH = 128;
     static const uint32 MAX_STRING_LENGTH = 512;
