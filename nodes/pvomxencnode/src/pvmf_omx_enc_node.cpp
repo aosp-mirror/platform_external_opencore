@@ -6593,8 +6593,7 @@ void PVMFOMXEncNode::DoReset(PVMFOMXEncNodeCommand& aCmd)
                     //      state change can be reported before all buffers are returned)
                     if (iNumOutstandingInputBuffers > 0 || iNumOutstandingOutputBuffers > 0)
                     {
-                        PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
-                                        (0, "PVMFOMXEncNode-%s::DoReset() Waiting for %d input and-or %d output buffers", iNodeTypeId, iNumOutstandingInputBuffers, iNumOutstandingOutputBuffers));
+                        LOGE("PVMFOMXEncNode-%s::DoReset() Waiting for %d input and-or %d output buffers", iNodeTypeId, iNumOutstandingInputBuffers, iNumOutstandingOutputBuffers);
 
                         return;
                     }
