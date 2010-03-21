@@ -70,10 +70,11 @@ class FragmentWriter: public Thread
         virtual ~FragmentWriter()
         {
             Mutex::Autolock l(mRequestMutex);
+
             LOG_ASSERT(mExitRequested, "Deleting an active instance.");
-            LOGD("Capacity of fragment queue reached %d", mQueue.capacity());
-            LOGD_IF(0 < mQueue.size(), "Flushing %d frags in dtor", mQueue.size());
-            while (0 < mQueue.size())  // make sure we are flushed
+            LOGD_IF(!mQueue.empty(), "Releasing %d fragments in dtor", mQueue.size());
+
+            while (!mQueue.empty())  // make sure we are flushed
             {
                 releaseQueuedFrame(mQueue.begin());
             }
@@ -85,6 +86,7 @@ class FragmentWriter: public Thread
         {
             mExitRequested = true;
             Thread::requestExit();
+
             mRequestMutex.lock();
             mRequestCv.signal();
             mRequestMutex.unlock();
@@ -100,15 +102,22 @@ class FragmentWriter: public Thread
             while (!done)
             {
                 mRequestMutex.lock();
-                done = mQueue.size() == 0 || iter > kMaxFlushAttempts;
+                done = mQueue.empty();
                 if (!done) mRequestCv.signal();
                 mRequestMutex.unlock();
                 if (!done) {
                     usleep(kFlushSleepMicros);
+                    if ((++iter % kMaxFlushAttemptsWarning) == 0) {
+                        if (iter >= kMaxFlushAttemptsCrashing) {
+                            LOGE("Fragment flush takes way too long!");
+                            // Crash media server!
+                            *((char *) 0) = 0x01;
+                        } else {
+                            LOGW("Fragement writer flush takes %d us", iter * kFlushSleepMicros);
+                        }
+                    }
                 }
-                ++iter;
             }
-            LOG_ASSERT(iter <= kMaxFlushAttempts, "Failed to flush");
         }
 
         // Called by the ProcessIncomingMsg method from the
@@ -119,7 +128,12 @@ class FragmentWriter: public Thread
                                          OsclRefCounterMemFrag& aMemFrag, PVMFFormatType aFormat,
                                          uint32& aTimestamp, int32 aTrackId, PVMp4FFComposerPort *aPort)
         {
-            if (mExitRequested) return PVMFErrCancelled;
+            if (mExitRequested) {
+                LOGW("Enqueue fragment after exit request!");
+                aFrame.clear();  // Release the frame
+                return PVMFErrCancelled;
+            }
+
             Mutex::Autolock lock(mRequestMutex);
             Request frame = {aFrame, aMemFrag, aFormat, aTimestamp, aTrackId, aPort};
             mQueue.push_back(frame);
@@ -130,9 +144,9 @@ class FragmentWriter: public Thread
     private:
         static const bool kThreadCallJava = false;
         static const OsclRefCounterMemFrag kEmptyFrag;
-        // Flush blocks for 2 seconds max.
-        static const size_t kMaxFlushAttempts = 10;
-        static const int kFlushSleepMicros = 200 * 1000;
+        static const int kFlushSleepMicros = 200 * 1000;    // 200 ms
+        static const size_t kMaxFlushAttemptsWarning = 10;  // 2 seconds
+        static const size_t kMaxFlushAttemptsCrashing = 30; // 6 seconds
 
         struct Request
         {
@@ -163,8 +177,6 @@ class FragmentWriter: public Thread
         // @Override Thread
         virtual bool threadLoop()
         {
-            Request frame;
-            bool addFrame = false;
             if (!mTid) mTid = androidGetThreadId();
 
             LOG_ASSERT(androidGetThreadId() == mTid,
@@ -177,19 +189,16 @@ class FragmentWriter: public Thread
                 mRequestCv.wait(mRequestMutex);
 
             if (!mQueue.empty()) {
-                // First copy the frame by value, since it will not be protected and the
-                // reference may change, then release the frame by reference
-                frame = mQueue[0];
-                addFrame = true;
-                releaseQueuedFrame(mQueue.begin());
-            }
-            mRequestMutex.unlock();
-
-            if (addFrame) {
+                // Hold the lock while writing the fragment
+                Request frame = mQueue[0];  // Make a local copy
                 mPrevWriteStatus = mComposer->AddMemFragToTrack(
                         frame.mFrame, frame.mFrag, frame.mFormat,
                         frame.mTimestamp, frame.mTrackId, frame.mPort);
+                if (!mQueue.empty()) {
+                    releaseQueuedFrame(mQueue.begin());
+                }
             }
+            mRequestMutex.unlock();
 
             return true;
         }
