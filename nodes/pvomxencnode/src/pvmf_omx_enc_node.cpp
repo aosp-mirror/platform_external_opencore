@@ -1206,8 +1206,6 @@ void PVMFOMXEncNode::Run()
             PVLOGGER_LOGMSG(PVLOGMSG_INST_LLDBG, iLogger, PVLOGMSG_STACK_TRACE,
                             (0, "PVMFOMXEncNode-%s::Run(): Flush pending:  Changing Component State Executing->Idle or Pause->Idle", iNodeTypeId));
 
-            if (iOutPort) iOutPort->ClearMsgQueues();
-
             err = OMX_SendCommand(iOMXEncoder, OMX_CommandStateSet, OMX_StateIdle, NULL);
             if (err != OMX_ErrorNone)
             {

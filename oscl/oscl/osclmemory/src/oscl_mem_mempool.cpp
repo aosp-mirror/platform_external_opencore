@@ -16,7 +16,6 @@
  * -------------------------------------------------------------------
  */
 #include "oscl_mem_mempool.h"
-#include <utils/Log.h>
 
 
 /**
@@ -154,10 +153,6 @@ OSCL_EXPORT_REF void OsclMemPoolFixedChunkAllocator::deallocate(OsclAny* p)
         {
             iObserver->freechunkavailable(iNextAvailableContextData);
         }
-    }
-    else if (iObserver && iCheckNextAvailableFreeChunk)
-    {
-        LOGW("We may have lost some free chunk %p available notification for memory pool %p with chunk size %d", ptmp, mptmp, iChunkSizeMemAligned);
     }
 
     // Decrement the refcount since deallocating succeeded

@@ -19,6 +19,34 @@
  * @file pvmp4ffcn_node.cpp
  * @brief Node for PV MPEG4 file format composer
  */
+
+/*
+ * FIXME:
+ * The current implementation of the file writer is NOT
+ * thread-safe.
+ *
+ * A separate delete queue should be used to
+ * pass back the fragments from the file writer thread
+ * to the composer node and to let the composer node
+ * handle the deallocation of any fragments; otherwise,
+ * race condition may occur. Some lost free chunk
+ * notification has been found due to this race
+ * condition.
+ *
+ * The reason why there is race condition is that the
+ * rest of the OpenCore assumes a single-thread model.
+ * In other words, everything is scheduled to
+ * run within a single omx thread. A separate file writer
+ * thread breaks this model, and deallocate fragments
+ * here may cause deallocate() be called within two
+ * separate thread, and thus the free chunk available
+ * flag can be corrupted.
+ *
+ * Don't remove the following #undef line unless you
+ * fix the above issue.
+ */
+#undef ANDROID
+
 #ifdef ANDROID
 // #define LOG_NDEBUG 0
 #define LOG_TAG "PvMp4Composer"
